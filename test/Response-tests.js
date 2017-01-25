@@ -1,7 +1,6 @@
 'use strict';
 
 const expect = require('chai').expect;
-const WError = require('verror').WError;
 
 const Response = require('../').Response;
 
@@ -57,7 +56,7 @@ describe('Response', function() {
       };
 
       expect(() => Response.fromAWSResponse(testAWSResponse))
-        .to.throw(WError, /failed to parse payload/);
+        .to.throw('failed to parse response payload');
     });
 
     it('should use payload as body if payload is not an object', function() {
@@ -133,7 +132,7 @@ describe('Response', function() {
       expect(response).to.have.property('statusCode', 500);
     });
 
-    it('should use parsed errorMessage as body if errorMessage can be parsed', function() {
+    it('should use parsed errorMessage as body if errorMessage can be parsed, but has no body field in it', function() {
       const messageData = {
         data: 'some data'
       };
@@ -147,6 +146,23 @@ describe('Response', function() {
       const response = Response.fromAWSResponse(testAWSResponse);
 
       expect(response).to.have.property('body').that.deep.equals(messageData);
+      expect(response).to.have.property('statusCode', 500);
+    });
+
+    it('should use parsed body field from errorMessage as body if errorMessage can be parsed', function() {
+      const messageData = {
+        body: { data: 'some data' }
+      };
+      const testAWSResponse = {
+        FunctionError: 'Handled',
+        Payload: JSON.stringify({
+          errorMessage: JSON.stringify(messageData)
+        })
+      };
+
+      const response = Response.fromAWSResponse(testAWSResponse);
+
+      expect(response).to.have.property('body').that.deep.equals(messageData.body);
       expect(response).to.have.property('statusCode', 500);
     });
 
