@@ -11,6 +11,12 @@ describe('Response', function() {
       expect(response).to.have.property('body').that.deep.equals({});
       expect(response).to.have.property('statusCode', 200);
     });
+
+    it('should handle case when options body is set to false', function() {
+      const response = new Response({ body: false });
+      expect(response).to.have.property('body').that.equals(false);
+      expect(response).to.have.property('statusCode', 200);
+    });
   });
 
   describe('#toJSON', function() {
