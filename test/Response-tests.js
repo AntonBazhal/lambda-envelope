@@ -8,30 +8,35 @@ describe('Response', function() {
   describe('#constructor', function() {
     it('should handle case when options object is not passed', function() {
       const response = new Response();
-      expect(response).to.have.property('body').that.deep.equals({});
       expect(response).to.have.property('statusCode', 200);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals({});
     });
 
     it('should handle case when options body is set to false', function() {
       const response = new Response({ body: false });
-      expect(response).to.have.property('body').that.equals(false);
       expect(response).to.have.property('statusCode', 200);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.equals(false);
     });
   });
 
   describe('#toJSON', function() {
     it('should return proper JSON object', function() {
       const testBody = { data: 'some data' };
+      const testEncoding = 'gzip';
       const testStatusCode = 200;
 
       const response = new Response({
-        body: testBody,
-        statusCode: testStatusCode
+        statusCode: testStatusCode,
+        encoding: testEncoding,
+        body: testBody
       });
 
       expect(response.toJSON()).to.be.deep.equal({
-        body: testBody,
-        statusCode: testStatusCode
+        statusCode: testStatusCode,
+        encoding: testEncoding,
+        body: testBody
       });
     });
   });
@@ -39,16 +44,19 @@ describe('Response', function() {
   describe('#toString', function() {
     it('should return proper stringified representation', function() {
       const testBody = { data: 'some data' };
+      const testEncoding = 'gzip';
       const testStatusCode = 200;
 
       const response = new Response({
-        body: testBody,
-        statusCode: testStatusCode
+        statusCode: testStatusCode,
+        encoding: testEncoding,
+        body: testBody
       });
 
       const expectedResult = JSON.stringify({
-        body: testBody,
-        statusCode: testStatusCode
+        statusCode: testStatusCode,
+        encoding: testEncoding,
+        body: testBody
       });
 
       expect(response.toString()).to.be.equal(expectedResult);
@@ -73,8 +81,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body', testPayload);
       expect(response).to.have.property('statusCode', 200);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body', testPayload);
     });
 
     it('should use payload as body if unhandled error is returned', function() {
@@ -88,8 +97,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(testPayload);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals(testPayload);
     });
 
     it('should use payload as body if handled error is returned, but payload has more than one field', function() {
@@ -104,8 +114,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(testPayload);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals(testPayload);
     });
 
     it('should use payload as body if handled error is returned, but there is no errorMessage field in payload', function() {
@@ -119,8 +130,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(testPayload);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals(testPayload);
     });
 
     it('should use errorMessage as body if handled error is returned, but errorMessage can`t be parsed', function() {
@@ -134,8 +146,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.equals(testPayload.errorMessage);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.equals(testPayload.errorMessage);
     });
 
     it('should use parsed errorMessage as body if errorMessage can be parsed, but has no body field in it', function() {
@@ -151,13 +164,15 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(messageData);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals(messageData);
     });
 
-    it('should use parsed body field from errorMessage as body if errorMessage can be parsed', function() {
+    it('should use parsed body and encoding fields from errorMessage if errorMessage can be parsed', function() {
       const messageData = {
-        body: { data: 'some data' }
+        body: { data: 'some data' },
+        encoding: 'gzip'
       };
       const testAWSResponse = {
         FunctionError: 'Handled',
@@ -168,8 +183,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(messageData.body);
       expect(response).to.have.property('statusCode', 500);
+      expect(response).to.have.property('encoding', messageData.encoding);
+      expect(response).to.have.property('body').that.deep.equals(messageData.body);
     });
 
     it('should use payload as body if there is no body field in it', function() {
@@ -182,13 +198,15 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(testPayload);
       expect(response).to.have.property('statusCode', 200);
+      expect(response).to.have.property('encoding', 'identity');
+      expect(response).to.have.property('body').that.deep.equals(testPayload);
     });
 
-    it('should use statusCode and body from payload when present', function() {
+    it('should use statusCode, encoding and body from payload when present', function() {
       const testPayload = {
         statusCode: 201,
+        encoding: 'gzip',
         body: {
           data: 'test data'
         }
@@ -199,8 +217,9 @@ describe('Response', function() {
 
       const response = Response.fromAWSResponse(testAWSResponse);
 
-      expect(response).to.have.property('body').that.deep.equals(testPayload.body);
       expect(response).to.have.property('statusCode', testPayload.statusCode);
+      expect(response).to.have.property('encoding', testPayload.encoding);
+      expect(response).to.have.property('body').that.deep.equals(testPayload.body);
     });
   });
 });
