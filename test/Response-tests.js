@@ -221,5 +221,22 @@ describe('Response', function() {
       expect(response).to.have.property('encoding', testPayload.encoding);
       expect(response).to.have.property('body').that.deep.equals(testPayload.body);
     });
+
+    it('should use statusCode, encoding and body from falsy payload when present', function() {
+      const testPayload = {
+        statusCode: 201,
+        encoding: 'gzip',
+        body: false
+      };
+      const testAWSResponse = {
+        Payload: JSON.stringify(testPayload)
+      };
+
+      const response = Response.fromAWSResponse(testAWSResponse);
+
+      expect(response).to.have.property('statusCode', testPayload.statusCode);
+      expect(response).to.have.property('encoding', testPayload.encoding);
+      expect(response).to.have.property('body').that.deep.equals(testPayload.body);
+    });
   });
 });
