@@ -31,7 +31,7 @@ describe('ResponseBuilder', function() {
   beforeEach(function() {
     this.s3client = {
       putObject: this.sandbox.stub().returns({ promise: () => Promise.resolve() }),
-      getSignedUrl: this.sandbox.stub().returns()
+      getSignedUrl: this.sandbox.stub().yields()
     };
     this.builder = new ResponseBuilder({
       bucket: 'test-bucket',
@@ -145,7 +145,7 @@ describe('ResponseBuilder', function() {
     it('should be able to handle S3 response', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
       const request = nock(url).get('/').reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
@@ -166,7 +166,7 @@ describe('ResponseBuilder', function() {
     it('should be able to handle S3 response', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
       const request = nock(url).get('/').reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
@@ -179,7 +179,7 @@ describe('ResponseBuilder', function() {
     it('should throw when S3 request fails', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
       const request = nock(url).get('/').replyWithError('resource not found');
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
@@ -194,7 +194,7 @@ describe('ResponseBuilder', function() {
     it('should throw whe S3 response is not a valid JSON', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
       const request = nock(url).get('/').reply(200, 'invalid');
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
@@ -397,7 +397,7 @@ describe('ResponseBuilder', function() {
     it('should be able to handle S3 response', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
       const request = nock(url).get('/').reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
@@ -458,7 +458,7 @@ describe('ResponseBuilder', function() {
     it('should be able to create compressed response', async function() {
       const url = 'https://test-url';
 
-      this.s3client.getSignedUrl.returns(url);
+      this.s3client.getSignedUrl.yields(null, url);
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
 
@@ -501,7 +501,7 @@ describe('ResponseBuilder', function() {
     it('should throw when getSignedUrl call fails', function() {
       const error = new Error('upload error');
 
-      this.s3client.getSignedUrl.throws(error);
+      this.s3client.getSignedUrl.yields(error);
 
       return expect(this.builder._buildS3Response(RESPONSE))
         .to.eventually.be.rejectedWith('failed to generate S3 pre-signed url')
