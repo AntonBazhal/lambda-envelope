@@ -186,7 +186,7 @@ describe('ResponseBuilder', function() {
 
       await expect(ResponseBuilder._parseS3Response(s3))
         .to.eventually.be.rejectedWith('failed to parse s3 response')
-        .and.to.have.nested.property('jse_cause.message', 'Error: resource not found');
+        .and.to.have.nested.property('jse_cause.message', 'resource not found');
 
       request.done();
     });
