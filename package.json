@@ -1,6 +1,6 @@
 {
   "name": "lambda-envelope",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Envelope for AWS Lambda responses that supports raw invocation response parsing",
   "repository": {
     "type": "git",
@@ -34,19 +34,19 @@
     "chai-as-promised": "^7.1.1",
     "chai-uuid": "^1.0.6",
     "env-test": "^1.0.0",
-    "eslint": "^5.12.1",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-mocha": "^5.2.1",
-    "mocha": "^5.2.0",
-    "nock": "^10.0.6",
-    "nyc": "^13.1.0",
-    "sinon": "^7.2.3"
+    "eslint": "^6.6.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-mocha": "^6.2.1",
+    "mocha": "^6.2.2",
+    "nock": "^11.6.0",
+    "nyc": "^14.1.1",
+    "sinon": "^7.5.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.407.0",
+    "aws-sdk": "^2.559.0",
     "got": "^9.6.0",
-    "uuid": "^3.3.2",
+    "uuid": "^3.3.3",
     "verror": "^1.10.0"
   }
 }
