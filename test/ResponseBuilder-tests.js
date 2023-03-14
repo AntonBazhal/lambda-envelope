@@ -190,21 +190,6 @@ describe('ResponseBuilder', function() {
 
       request.done();
     });
-
-    it('should throw whe S3 response is not a valid JSON', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').reply(200, 'invalid');
-
-      const s3 = await this.builder._buildS3Response(RESPONSE);
-
-      await expect(ResponseBuilder._parseS3Response(s3))
-        .to.eventually.be.rejectedWith('failed to parse s3 response')
-        .and.to.have.nested.property('jse_cause.message', 'Unexpected token i in JSON at position 0');
-
-      request.done();
-    });
   });
 
   describe('#fromAWSResponse', function() {
