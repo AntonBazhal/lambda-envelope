@@ -8,7 +8,7 @@ const { S3 } = require('aws-sdk');
 const sinon = require('sinon');
 const zlib = require('zlib');
 
-const { Response, ResponseBuilder } = require('../');
+const { Response, ResponseBuilder } = require('..');
 
 chai.use(chaiAsPromised);
 chai.use(chaiUUID);
