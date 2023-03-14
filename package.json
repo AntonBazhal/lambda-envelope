@@ -39,7 +39,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-mocha": "^10.1.0",
     "mocha": "^6.2.2",
-    "nock": "^11.6.0",
+    "nock": "^13.3.0",
     "nyc": "^15.1.0",
     "sinon": "^15.0.2"
   },
