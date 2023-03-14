@@ -111,7 +111,7 @@ describe('ResponseBuilder', function() {
 
       return expect(ResponseBuilder._parseCompressedResponse(response))
         .to.eventually.be.rejectedWith('failed to parse compressed response')
-        .and.to.have.nested.property('jse_cause.message', 'First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.');
+        .and.to.have.nested.property('jse_cause.message', 'The first argument must be of type string or an instance of Buffer, ArrayBuffer, or Array or an Array-like Object. Received an instance of Object');
     });
 
     it('should throw when response is not gzip encoded', function() {
