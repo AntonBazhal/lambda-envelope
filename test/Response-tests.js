@@ -2,7 +2,7 @@
 
 const { expect } = require('chai');
 
-const { Response } = require('../');
+const { Response } = require('..');
 
 describe('Response', function() {
   describe('#constructor', function() {

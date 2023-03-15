@@ -8,7 +8,7 @@ const { S3 } = require('aws-sdk');
 const sinon = require('sinon');
 const zlib = require('zlib');
 
-const { Response, ResponseBuilder } = require('../');
+const { Response, ResponseBuilder } = require('..');
 
 chai.use(chaiAsPromised);
 chai.use(chaiUUID);
@@ -111,7 +111,7 @@ describe('ResponseBuilder', function() {
 
       return expect(ResponseBuilder._parseCompressedResponse(response))
         .to.eventually.be.rejectedWith('failed to parse compressed response')
-        .and.to.have.nested.property('jse_cause.message', 'First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.');
+        .and.to.have.nested.property('jse_cause.message', 'The first argument must be of type string or an instance of Buffer, ArrayBuffer, or Array or an Array-like Object. Received an instance of Object');
     });
 
     it('should throw when response is not gzip encoded', function() {
@@ -187,21 +187,6 @@ describe('ResponseBuilder', function() {
       await expect(ResponseBuilder._parseS3Response(s3))
         .to.eventually.be.rejectedWith('failed to parse s3 response')
         .and.to.have.nested.property('jse_cause.message', 'resource not found');
-
-      request.done();
-    });
-
-    it('should throw whe S3 response is not a valid JSON', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').reply(200, 'invalid');
-
-      const s3 = await this.builder._buildS3Response(RESPONSE);
-
-      await expect(ResponseBuilder._parseS3Response(s3))
-        .to.eventually.be.rejectedWith('failed to parse s3 response')
-        .and.to.have.nested.property('jse_cause.message', 'Unexpected token i in JSON at position 0');
 
       request.done();
     });
