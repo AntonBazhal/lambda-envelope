@@ -474,6 +474,7 @@ describe('ResponseBuilder', function() {
 
     it('should throw when getSignedUrl call fails', function() {
       const error = new Error('upload error');
+      // FIXME: calling S3RequestPresigner.prototype.rejects(error) does not work for some reason
       S3RequestPresigner.prototype.presign.restore();
       this.sandbox.stub(S3RequestPresigner.prototype, 'presign').rejects(error);
 
