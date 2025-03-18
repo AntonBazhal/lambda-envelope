@@ -36,7 +36,8 @@ describe('ResponseBuilder', function() {
       credentials: {
         accessKeyId: '',
         secretAccessKey: ''
-      }
+      },
+      region: 'us-east-1'
     });
     this.sandbox.stub(this.s3client, 'send');
     this.sandbox.stub(S3RequestPresigner.prototype, 'presign').resolvesArg(0);
