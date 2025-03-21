@@ -7,7 +7,7 @@ references:
 
   node_container: &node_container
     docker:
-      - image: cimg/node:23.10.0
+      - image: cimg/node:22.14.0
 
   attach_workspace: &attach_workspace
     attach_workspace:
