@@ -56,12 +56,12 @@ Constructor takes options object with the following parameters:
 
 ##### Example
 ```js
-const AWS = require('aws-sdk');
-const ResponseBuilder = require('lambda-envelope').ResponseBuilder;
+const { S3Client } = require('@aws-sdk/client-s3');
+const { ResponseBuilder } = require('lambda-envelope');
 
 const builder = new ResponseBuilder({
   bucket: 'bucket-for-responses',
-  s3client: new AWS.S3({ maxRetries: 5 }),
+  s3client: new S3Client({ maxAttempts: 5 }),
   threshold: 256
   urlTTL: 60
 });
@@ -92,7 +92,7 @@ Creates and instance of `Response` with the following parameters:
 
 ##### Example
 ```js
-const ResponseBuilder = require('lambda-envelope').ResponseBuilder;
+const { ResponseBuilder } = require('lambda-envelope');
 
 const builder = new ResponseBuilder({
   bucket: 'bucket-for-responses'
@@ -115,17 +115,16 @@ Method that handles raw [AWS Lambda][aws-lambda-url] invocation response parsing
 
 ##### Example
 ```js
-const AWS = require('aws-sdk');
-const ResponseBuilder = require('lambda-envelope').ResponseBuilder;
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
+const { ResponseBuilder } = require('lambda-envelope');
 
-const lambda = new AWS.Lambda();
+const lambda = new LambdaClient();
 const params = {
   FunctionName: 'function-to-be-invoked',
   Payload: JSON.stringify({})
 };
 
-return lambda.invoke(params)
-  .promise()
+return lambda.send(new InvokeCommand(params))
   .then(rawResponse => ResponseBuilder.fromAWSResponse(rawResponse))
   .then(response => {
     if (response.statusCode === 200) {
@@ -140,7 +139,7 @@ return lambda.invoke(params)
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2023 Anton Bazhal
+Copyright (c) 2017-2025 Anton Bazhal
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -150,8 +149,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 [aws-lambda-url]: https://aws.amazon.com/lambda/details/
 [aws-lambda-limits-url]: https://docs.aws.amazon.com/lambda/latest/dg/limits.html
-[aws-s3-client-url]: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
-[aws-s3-get-signed-url]: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getSignedUrl-property
+[aws-s3-client-url]: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/
+[aws-s3-get-signed-url]: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-s3-request-presigner/Variable/getSignedUrl/
 [ci-image]: https://circleci.com/gh/AntonBazhal/lambda-envelope.svg?style=shield&circle-token=f6c189b6f4e3d0e664a7947ec3e7c7e5086af079
 [ci-url]: https://circleci.com/gh/AntonBazhal/lambda-envelope
 [cloudwatch-url]: https://aws.amazon.com/cloudwatch/
