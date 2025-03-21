@@ -1,10 +1,11 @@
 'use strict';
 
 const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
+const chaiAsPromised = require('chai-as-promised').default;
 const chaiUUID = require('chai-uuid');
 const nock = require('nock');
-const { S3 } = require('aws-sdk');
+const { S3Client } = require('@aws-sdk/client-s3');
+const { S3RequestPresigner } = require('@aws-sdk/s3-request-presigner');
 const sinon = require('sinon');
 const zlib = require('zlib');
 
@@ -29,10 +30,17 @@ describe('ResponseBuilder', function() {
   });
 
   beforeEach(function() {
-    this.s3client = {
-      putObject: this.sandbox.stub().returns({ promise: () => Promise.resolve() }),
-      getSignedUrl: this.sandbox.stub().yields()
-    };
+    this.url = 'https://test-bucket.test-url';
+    this.s3client = new S3Client({
+      endpoint: 'https://test-url',
+      credentials: {
+        accessKeyId: '',
+        secretAccessKey: ''
+      },
+      region: 'us-east-1'
+    });
+    this.sandbox.stub(this.s3client, 'send');
+    this.sandbox.stub(S3RequestPresigner.prototype, 'presign').resolvesArg(0);
     this.builder = new ResponseBuilder({
       bucket: 'test-bucket',
       s3client: this.s3client
@@ -84,7 +92,7 @@ describe('ResponseBuilder', function() {
       expect(builder).to.have.property('urlTTL', 30);
       expect(builder)
         .to.have.property('s3client')
-        .that.is.instanceof(S3);
+        .that.is.instanceof(S3Client);
     });
   });
 
@@ -130,7 +138,7 @@ describe('ResponseBuilder', function() {
 
       return expect(ResponseBuilder._parseCompressedResponse(compressed))
         .to.eventually.be.rejectedWith('failed to parse compressed response')
-        .and.to.have.nested.property('jse_cause.message', 'Unexpected token o in JSON at position 1');
+        .and.to.have.nested.property('jse_cause.message', 'Unexpected token \'o\', "not a JSON" is not valid JSON');
     });
   });
 
@@ -143,10 +151,7 @@ describe('ResponseBuilder', function() {
     });
 
     it('should be able to handle S3 response', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').reply(200, RESPONSE.toString());
+      const request = nock(this.url).get(/^\//).reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
       const parsed = await ResponseBuilder._parseResponse(s3);
@@ -164,10 +169,7 @@ describe('ResponseBuilder', function() {
 
   describe('#_parseS3Response', function() {
     it('should be able to handle S3 response', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').reply(200, RESPONSE.toString());
+      const request = nock(this.url).get(/^\//).reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
       const parsed = await ResponseBuilder._parseS3Response(s3);
@@ -177,10 +179,7 @@ describe('ResponseBuilder', function() {
     });
 
     it('should throw when S3 request fails', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').replyWithError('resource not found');
+      const request = nock(this.url).get(/^\//).replyWithError('resource not found');
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
 
@@ -380,10 +379,7 @@ describe('ResponseBuilder', function() {
     });
 
     it('should be able to handle S3 response', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-      const request = nock(url).get('/').reply(200, RESPONSE.toString());
+      const request = nock(this.url).get(/^\//).reply(200, RESPONSE.toString());
 
       const s3 = await this.builder._buildS3Response(RESPONSE);
       const awsResponse = {
@@ -441,42 +437,35 @@ describe('ResponseBuilder', function() {
 
   describe('#_buildS3Response', function() {
     it('should be able to create compressed response', async function() {
-      const url = 'https://test-url';
-
-      this.s3client.getSignedUrl.yields(null, url);
-
       const s3 = await this.builder._buildS3Response(RESPONSE);
 
       expect(s3).to.be.an.instanceof(Response);
 
       expect(s3).to.have.property('statusCode', RESPONSE.statusCode);
       expect(s3).to.have.property('encoding', 's3');
-      expect(s3).to.have.property('body', url);
+      expect(s3).to.have.property('body').contains(this.url);
 
-      sinon.assert.calledOnce(this.s3client.putObject);
+      sinon.assert.calledOnce(this.s3client.send);
 
-      const putParams = this.s3client.putObject.firstCall.args[0];
-      expect(putParams).to.have.property('Bucket', this.builder.bucket);
-      expect(putParams).to.have.property('Body', RESPONSE.toString());
-      expect(putParams)
+      const putParams = this.s3client.send.firstCall.args[0];
+      expect(putParams.input).to.have.property('Bucket', this.builder.bucket);
+      expect(putParams.input).to.have.property('Body', RESPONSE.toString());
+      expect(putParams.input)
         .to.have.property('Key')
         .that.is.a.uuid('v4');
 
-      sinon.assert.calledOnce(this.s3client.getSignedUrl);
+      sinon.assert.calledOnce(S3RequestPresigner.prototype.presign);
 
-      const getArgs = this.s3client.getSignedUrl.firstCall.args;
-      expect(getArgs[0]).to.be.equal('getObject');
-      expect(getArgs[1]).to.have.property('Bucket', this.builder.bucket);
-      expect(getArgs[1]).to.have.property('Expires', this.builder.urlTTL);
-      expect(getArgs[1]).to.have.property('Key', putParams.Key);
+      const getArgs = S3RequestPresigner.prototype.presign.firstCall.args;
+      expect(getArgs[0]).to.have.property('hostname', 'test-bucket.test-url');
+      expect(getArgs[0]).to.have.property('method', 'GET');
+      expect(getArgs[1]).to.have.property('expiresIn', this.builder.urlTTL);
     });
 
     it('should throw when putObject call fails', function() {
       const error = new Error('upload error');
 
-      this.s3client.putObject.returns({
-        promise: () => Promise.reject(error)
-      });
+      this.s3client.send.rejects(error);
 
       return expect(this.builder._buildS3Response(RESPONSE))
         .to.eventually.be.rejectedWith('failed to upload response object to S3')
@@ -485,8 +474,9 @@ describe('ResponseBuilder', function() {
 
     it('should throw when getSignedUrl call fails', function() {
       const error = new Error('upload error');
-
-      this.s3client.getSignedUrl.yields(error);
+      // FIXME: calling S3RequestPresigner.prototype.rejects(error) does not work for some reason
+      S3RequestPresigner.prototype.presign.restore();
+      this.sandbox.stub(S3RequestPresigner.prototype, 'presign').rejects(error);
 
       return expect(this.builder._buildS3Response(RESPONSE))
         .to.eventually.be.rejectedWith('failed to generate S3 pre-signed url')

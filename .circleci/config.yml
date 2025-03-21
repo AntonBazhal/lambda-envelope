@@ -7,7 +7,7 @@ references:
 
   node_container: &node_container
     docker:
-      - image: circleci/node:14
+      - image: cimg/node:23.10.0
 
   attach_workspace: &attach_workspace
     attach_workspace:
@@ -23,6 +23,7 @@ jobs:
     <<: *node_container
     steps:
       - checkout
+      - run: rm .npmrc # npmrc only used for publishing
       - run: npm ci
       - persist_to_workspace:
           root: *workspace_root
@@ -34,7 +35,10 @@ jobs:
       - checkout
       - *attach_workspace
       - run: npm run test
-      - run: cat ./coverage/lcov.info | npx coveralls
+      - run: |
+          if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+            cat ./coverage/lcov.info | npx coveralls
+          fi
   publish:
     <<: *node_container
     steps:
