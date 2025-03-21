@@ -35,10 +35,6 @@ jobs:
       - checkout
       - *attach_workspace
       - run: npm run test
-      - run: |
-          if [ -n "$COVERALLS_REPO_TOKEN" ]; then
-            cat ./coverage/lcov.info | npx coveralls
-          fi
   publish:
     <<: *node_container
     steps:
